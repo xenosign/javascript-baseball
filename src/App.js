@@ -7,7 +7,9 @@ class App {
 
   play() {
     this.gameStartMessage();
-    this.computerRandomNumber();
+    // 결국 컴퓨터가 만든 번호는 this.nonDuplicateNumbers 라는 생성자에 들어가는데 할당이 안되어 있으므로
+    // this.nonDuplicateNumbers 생성자에 this.computerRandomNumber() 리턴 값을 할당
+    this.nonDuplicateNumbers = this.computerRandomNumber();
     this.getUserNumberInput();
   }
 
@@ -28,30 +30,44 @@ class App {
 
   getUserNumberInput() {
     MissionUtils.Console.readLine("숫자를 입력해주세요 : ", (userInput) => {
-      this.checkError(userInput);
-      const userNum = userInput.split("").map(Number);
-      this.checkAnswer(userNum);
+      // checkError 함수에 들어가기 전 부터 배열 형태로 받아야 하는게 아닌가 싶네요.
+      // 미리 배열로 자르고 문자열을 숫자로 변경했습니다
+      // 결국 연속으로 입력 받은 숫자를 전부 숫자인지 검사해야 하는데, 이는 배열 값으로 들어가야 하니까요.
+
+      // 다만 문자열을 자르실 때 "" 로 자르면 구분이 어려워서 스페이스바로 구분이 가능하도록 split 의 인자를 " " 로 주었습니다!
+      const userNumArr = userInput.split("").map(Number);
+
+      // 숫자로 잘려진 배열을 유효성 검사에 삽입!
+      this.checkError(userNumArr);
+      this.checkAnswer(userNumArr);
     });
   }
 
-  checkError(userInput) {
+  checkError(userNumArr) {
     const NUMBERS = /^[1-9]+$/;
-    if (!NUMBERS.test(userInput)) throw new Error("숫자가 입력되지 않았습니다");
 
-    if (userInput.length !== 3) throw new Error("3개의 글자가 아닙니다.");
+    // 각각의 배열에 들어간 숫자 전부를 체크해 줘야 하므로 반복문 사용
+    for (let i = 0; i < userNumArr.length; i++) {
+      if (!NUMBERS.test(userNumArr[i]))
+        throw new Error("숫자가 입력되지 않았습니다");
+    }
 
-    if (new Set(userInput).size !== 3)
+    // 각각의 3개의 값이 정확히 잘려서 들어 왔는지 확인
+    if (userNumArr.length !== 3) throw new Error("3개의 숫자가 아닙니다.");
+
+    // 배열 내부에 중복을 검사
+    if (new Set(userNumArr).size !== 3)
       throw new Error("중복된 숫자가 있습니다.");
   }
 
-  checkAnswer(userInput) {
+  checkAnswer(userNumArr) {
     let STRIKE = 0;
     let BALL = 0;
     let result = "";
 
-    for (let i = 0; i < userInput.length; i++) {
-      if (userInput[i] === this.nonDuplicateNumbers[i]) STRIKE++;
-      else if (userInput.includes(this.nonDuplicateNumbers[i])) BALL++;
+    for (let i = 0; i < userNumArr.length; i++) {
+      if (userNumArr[i] === this.nonDuplicateNumbers[i]) STRIKE++;
+      else if (userNumArr.includes(this.nonDuplicateNumbers[i])) BALL++;
     }
 
     if (BALL === 0 && STRIKE === 0) {
@@ -70,6 +86,8 @@ class App {
   }
 
   findAnswer(res) {
+    // 콘솔 로그에 스트라이크 볼 여부가 나와야 유추가 가능하므로 콘솔 로그 찍어주기
+    MissionUtils.Console.print(res);
     if (res !== "3스트라이크") {
       this.getUserNumberInput();
     } else if (res === "3스트라이크") {
